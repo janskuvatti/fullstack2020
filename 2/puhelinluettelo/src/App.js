@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+
 //Filter
 const Filter = (props) => {
   return(
@@ -26,34 +28,53 @@ const PersonForm = (props)=>{
     </div>
   )
 }
+
 //Persons
 const Persons = (props) => {
   return(
-    <ul>
-    {/* {allNames} */}
-
-  {props.searches.map(p =>
-<li key={p.name}>{p.name} {p.number}</li> 
-)}
-
-  </ul>
+    <div >
+    
+{props.all()}
+  </div>
   )
 }
 const App = () => {
   const [ persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
+   
+    // { name: 'Arto Hellas', number: '040-123456' },
+    // { name: 'Ada Lovelace', number: '39-44-5323523' },
+    // { name: 'Dan Abramov', number: '12-43-234345' },
+  
+    // { name: 'Mary Poppendieck', number: '39-23-6423122' }
+    
   ]) 
-  const [searches, setSearches] = useState(persons)
+  const [searches, setSearches] = useState([])
+
   const [ newName, setNewName ] = useState('');
   const [ puh, setNewPuh ] = useState('');
   const [filter, setFilter] = useState('');
+  useEffect(() => {
+    axios.get('http://localhost:3001/persons')
+
+    .then(response => {
+    
+      setPersons(response.data)
+      setSearches(response.data)
+      //console.log(persons)
+    })
+  }, [])
+  const data = () => {
+    return searches.map(p =>
+<p key={p.name}>{p.name} {p.number}</p> 
+
+    )
+  }
+
 const handlePhoneChange = (e) => {
 e.preventDefault();
 setNewPuh(e.target.value)
 }
+
 const handleNameChange = (e) => {
   e.preventDefault();
   setNewName(e.target.value)
@@ -96,17 +117,18 @@ const filterNames = (e) => {
  console.log(searches)
  //setPersons(searches);
 }
+ 
   return (
     <div>
       <h2>Phonebook</h2>
       {/* <form onSubmit={filterNames}> */}
-      <Filter searches={searches} persons={persons} filterNames ={filterNames} />
+      <Filter searches={searches} persons={persons} filterNames ={filterNames} key={searches.name}/>
 {/* </form> */}
 <PersonForm persons = {persons} addNewName={addNewName} newName ={newName} handleNameChange ={handleNameChange} puh={puh} handlePhoneChange={handlePhoneChange}/>
       
       <h2>Numbers</h2>
-      <Persons searches={searches} />
-   
+      {/* <Persons key={persons.id} searches={data()} /> */}
+      <Persons key={persons.name} all={data} />
     </div>
   )
 
