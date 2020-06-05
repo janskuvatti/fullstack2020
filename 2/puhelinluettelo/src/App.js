@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-
+//import axios from 'axios'
+import phoneService from './services/service'
 //Filter
 const Filter = (props) => {
   return(
@@ -19,7 +19,7 @@ const PersonForm = (props)=>{
           name: <input  value={props.newName} onChange={props.handleNameChange}/>
 
         </div>
-        <div>number: <input  value={props.puh} onChange={props.handlePhoneChange} /></div>
+        <div>number: <input value={props.puh} onChange={ props.handlePhoneChange} /></div>
 
         <div>
           <button type="submit">add</button>
@@ -49,21 +49,41 @@ const App = () => {
   const [ puh, setNewPuh ] = useState('');
   const [filter, setFilter] = useState('');
   useEffect(() => {
-    axios.get('http://localhost:3001/persons')
-
-    .then(response => {
+   phoneService
+    .fetchAll()
+    .then(all=> {
     
-      setPersons(response.data)
-      setSearches(response.data)
+      setPersons(all)
+      setSearches(all)
     })
   }, [])
   const data = () => {
+    
     return searches.map(p =>
-<p key={p.name}>{p.name} {p.number}</p> 
-
+    <div key={p.id}>
+<p key={p.name}>{p.name} {p.number} </p> <button onClick={() => poista(p.id, p.name)}>Delete</button>
+</div>
     )
   }
+const poista = ( id) => {
+  const find= persons.find(x => x.id === id)
+if(window.confirm(`Are you sure you want to delete ${find.name}?`)){
+  phoneService
+  .rem(id) 
+ .then(
+   phoneService.fetchAll().then(all=> {
+   
+     setPersons(all)
+     setSearches(all)
+     alert(`${find.name} is succesfully deleted`)
+     data();
 
+   })
+ )
+  
+}
+
+}
 const handlePhoneChange = (e) => {
 e.preventDefault();
 setNewPuh(e.target.value)
@@ -75,24 +95,53 @@ const handleNameChange = (e) => {
 }
 const addNewName = (e) => {
   e.preventDefault();
+  const nameObject = {
+    name : newName,
+    number: puh
+     }
+const upd = persons.find((p )=> p.name === nameObject.name)
+
+   if(persons.find((n) => n.name === nameObject.name)){
+     const id = upd.id;
+    if(window.confirm(`${nameObject.name} is already added to phonebook, replace the old number with
+    a new one?`)){
+phoneService.edit(id, nameObject).then(x => {
+  alert(`person ${newName} was succesfully updated`)
+  setNewName('');
+            setNewPuh('')
+})
+.catch (e => alert(`${nameObject.name} was already removed`))
+setPersons(persons.filter (p => p.id !== id));
+setSearches(persons)
 
 
-   if(persons.find((n) => n.name === newName)){
-    alert(`${newName} is already added to phonebook`)
     }
- 
-      else {
-        const nameObject = {
-          name : newName,
-          number: puh
-           }
-         
-         setPersons(persons.concat(nameObject))
-           setNewName('');
-           setNewPuh('')
-      }
-  setSearches(persons)
     
+
+     
+   }
+     
+   else {
+      
+         
+           
+    //TODO: Post a new pewson to db
+   phoneService
+   .create(nameObject) 
+    .then((r) => {
+     setPersons(persons.concat(nameObject))
+     alert(`${nameObject.name} succesfully added`)
+     setNewName('');
+     setNewPuh('')
+
+      console.log(persons)
+      //setSearches(persons)
+     // data();
+
+    })
+     //setNewName({name: '', number: ''});
+
+}
 }
 const filterNames = (e) => {
   
